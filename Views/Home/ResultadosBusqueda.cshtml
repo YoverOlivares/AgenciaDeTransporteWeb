@@ -1,0 +1,91 @@
+﻿@model List<AgenciaDeTransporteWeb.Models.Entities.Viaje>
+@{
+    ViewData["Title"] = "Resultados de Búsqueda";
+}
+
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2>Resultados de Búsqueda</h2>
+            <p class="text-muted">
+                Viajes de <strong>@ViewBag.Origen</strong> a <strong>@ViewBag.Destino</strong>
+                @if (ViewBag.Fecha != null)
+                {
+                    <span> para el @((DateTime)ViewBag.Fecha).ToString("dd/MM/yyyy")</span>
+                }
+            </p>
+        </div>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="row">
+            @foreach (var viaje in Model)
+            {
+                <div class="col-12 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-3">
+                                    <h5 class="mb-1">@viaje.Ruta.CiudadOrigen</h5>
+                                    <p class="text-muted mb-0">@viaje.FechaSalida.ToString("HH:mm")</p>
+                                    <small class="text-muted">@viaje.FechaSalida.ToString("dd/MM/yyyy")</small>
+                                </div>
+                                <div class="col-md-1 text-center">
+                                    <i class="fas fa-arrow-right text-primary"></i>
+                                </div>
+                                <div class="col-md-3">
+                                    <h5 class="mb-1">@viaje.Ruta.CiudadDestino</h5>
+                                    <p class="text-muted mb-0">@viaje.FechaLlegada.ToString("HH:mm")</p>
+                                    <small class="text-muted">@viaje.FechaLlegada.ToString("dd/MM/yyyy")</small>
+                                </div>
+                                <div class="col-md-2">
+                                    <p class="mb-1"><strong>Autobús:</strong></p>
+                                    <p class="text-muted mb-0">@viaje.Autobus.Placa</p>
+                                    <small class="text-muted">@viaje.Autobus.Marca @viaje.Autobus.Modelo</small>
+                                </div>
+                                <div class="col-md-2 text-center">
+                                    <h4 class="text-success mb-1">S/. @viaje.PrecioViaje</h4>
+                                    <p class="text-muted mb-0">@viaje.AsientosDisponibles disponibles</p>
+                                </div>
+                                <div class="col-md-1">
+                                    @if (User.Identity.IsAuthenticated)
+                                    {
+                                        <a asp-controller="Reservas" asp-action="SeleccionarAsiento"
+                                           asp-route-viajeId="@viaje.Id"
+                                           class="btn btn-primary">Seleccionar</a>
+                                    }
+                                    else
+                                    {
+                                        <a asp-controller="Account" asp-action="Login"
+                                           class="btn btn-outline-primary">Inicia Sesión</a>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-info text-center">
+                    <h4>No se encontraron viajes</h4>
+                    <p>No hay viajes disponibles para la búsqueda realizada. Intenta con otras fechas u destinos.</p>
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-primary">Volver a buscar</a>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Nueva Búsqueda
+            </a>
+        </div>
+    </div>
+</div>

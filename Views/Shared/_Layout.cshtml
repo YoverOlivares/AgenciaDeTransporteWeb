@@ -6,45 +6,230 @@
     <title>@ViewData["Title"] - Agencia de Transporte</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/Layout.css" asp-append-version="true" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-dark bg-dark">
-            <div class="container-fluid">
-                <a class="navbar-brand" href="/">Agencia de Transporte</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+    <header class="modern-header">
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <div class="container-fluid px-4">
+                <a class="navbar-brand modern-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                    <div class="brand-icon">
+                        <i class="fas fa-bus"></i>
+                    </div>
+                    <div class="brand-text">
+                        <span class="brand-name">TransporteMax</span>
+                        <small class="brand-tagline">Tu viaje perfecto</small>
+                    </div>
+                </a>
+
+                <button class="navbar-toggler modern-toggler" type="button" data-bs-toggle="collapse"
+                        data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav me-auto">
+
+                <div class="navbar-collapse collapse">
+                    <ul class="navbar-nav flex-grow-1 justify-content-center">
                         <li class="nav-item">
-                            <a class="nav-link" asp-controller="Home" asp-action="Index">Inicio</a>
+                            <a class="nav-link modern-nav-link" asp-area="" asp-controller="Home" asp-action="Index">
+                                <i class="fas fa-home nav-icon"></i>
+                                <span>Inicio</span>
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" asp-controller="Rutas" asp-action="Index">Rutas</a>
+                            <a class="nav-link modern-nav-link" asp-area="" asp-controller="Rutas" asp-action="Index">
+                                <i class="fas fa-route nav-icon"></i>
+                                <span>Rutas</span>
+                            </a>
                         </li>
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link modern-nav-link" asp-area="" asp-controller="Reservas" asp-action="MisReservas">
+                                    <i class="fas fa-ticket-alt nav-icon"></i>
+                                    <span>Mis Reservas</span>
+                                </a>
+                            </li>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link modern-nav-link dropdown-toggle" href="#" id="adminDropdown"
+                                       role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-cog nav-icon"></i>
+                                        <span>Administración</span>
+                                    </a>
+                                    <ul class="dropdown-menu modern-dropdown">
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Admin" asp-action="Dashboard">
+                                                <i class="fas fa-chart-line me-2"></i>Dashboard
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Admin" asp-action="GestionarRutas">
+                                                <i class="fas fa-map-marked-alt me-2"></i>Gestionar Rutas
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Admin" asp-action="GestionarAutobuses">
+                                                <i class="fas fa-bus me-2"></i>Gestionar Autobuses
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Admin" asp-action="HistorialTransacciones">
+                                                <i class="fas fa-money-bill-wave me-2"></i>Transacciones
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+                            }
+                        }
                     </ul>
-                    <partial name="_LoginPartial" />
+
+                    <div class="navbar-nav ms-auto">
+                        <partial name="_LoginPartial" />
+                    </div>
                 </div>
             </div>
         </nav>
     </header>
 
-    <div class="container">
-        <main role="main" class="pb-3">
+    <div class="main-content">
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success modern-alert alert-dismissible fade show" role="alert">
+                <div class="alert-content">
+                    <i class="fas fa-check-circle alert-icon"></i>
+                    <span>@TempData["Success"]</span>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger modern-alert alert-dismissible fade show" role="alert">
+                <div class="alert-content">
+                    <i class="fas fa-exclamation-triangle alert-icon"></i>
+                    <span>@TempData["Error"]</span>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        <main role="main" class="container-fluid main-container">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2025 - Agencia de Transporte
+    <footer class="modern-footer">
+        <div class="footer-content">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="footer-section">
+                            <h5 class="footer-title">
+                                <i class="fas fa-bus footer-brand-icon"></i>
+                                TransporteMax
+                            </h5>
+                            <p class="footer-description">
+                                Conectamos destinos, creamos experiencias. Tu mejor opción para viajar
+                                seguro, cómodo y con la mejor atención al cliente.
+                            </p>
+                            <div class="social-links">
+                                <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
+                                <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                                <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
+                                <a href="#" class="social-link"><i class="fab fa-youtube"></i></a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-2 col-md-6 mb-4">
+                        <div class="footer-section">
+                            <h6 class="footer-subtitle">Enlaces Rápidos</h6>
+                            <ul class="footer-links">
+                                <li><a asp-controller="Home" asp-action="Index">Inicio</a></li>
+                                <li><a asp-controller="Rutas" asp-action="Index">Rutas</a></li>
+                                <li><a href="#">Promociones</a></li>
+                                <li><a href="#">Sobre Nosotros</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-3 col-md-6 mb-4">
+                        <div class="footer-section">
+                            <h6 class="footer-subtitle">Información Legal</h6>
+                            <ul class="footer-links">
+                                <li><a asp-controller="Home" asp-action="Privacy">Política de Privacidad</a></li>
+                                <li><a href="#">Términos y Condiciones</a></li>
+                                <li><a href="#">Política de Cookies</a></li>
+                                <li><a href="#">FAQ</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-3 col-md-6 mb-4">
+                        <div class="footer-section">
+                            <h6 class="footer-subtitle">Contacto</h6>
+                            <div class="contact-info">
+                                <div class="contact-item">
+                                    <i class="fas fa-phone"></i>
+                                    <span>+51 999 888 777</span>
+                                </div>
+                                <div class="contact-item">
+                                    <i class="fas fa-envelope"></i>
+                                    <span>info@transportemax.com</span>
+                                </div>
+                                <div class="contact-item">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span>Lima, Perú</span>
+                                </div>
+                                <div class="contact-item">
+                                    <i class="fas fa-clock"></i>
+                                    <span>24/7 Atención al cliente</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="footer-bottom">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <p class="copyright">
+                                &copy; 2025 TransporteMax. Todos los derechos reservados.
+                            </p>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <div class="payment-methods">
+                                <span class="payment-text">Métodos de pago:</span>
+                                <i class="fab fa-cc-visa payment-icon"></i>
+                                <i class="fab fa-cc-mastercard payment-icon"></i>
+                                <i class="fab fa-cc-paypal payment-icon"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </footer>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
     @await RenderSectionAsync("Scripts", required: false)
+
+    <script>
+        // Efecto de scroll suave para el navbar
+        window.addEventListener('scroll', function() {
+            const header = document.querySelector('.modern-header');
+            if (window.scrollY > 100) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+    </script>
 </body>
 </html>

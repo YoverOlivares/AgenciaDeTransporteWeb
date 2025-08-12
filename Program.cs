@@ -7,9 +7,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
 
+// Configuración de conexión a SQL Server
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Configuración de Identity
 builder.Services.AddIdentity<Usuario, IdentityRole>(options =>
 {
     options.SignIn.RequireConfirmedAccount = false;
@@ -42,6 +44,7 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
+// Inicializar base de datos con datos de prueba
 using (var scope = app.Services.CreateScope())
 {
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<Usuario>>();

@@ -1,9 +1,275 @@
 ﻿@{
-    ViewData["Title"] = "Bienvenido - Agencia de Transporte";
+    ViewData["Title"] = "Inicio - Agencia de Transporte";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Bienvenido a la Agencia de Transporte</h1>
-    <p>Explora nuestras rutas y reserva tu próximo viaje con facilidad.</p>
-    <a class="btn btn-primary" asp-controller="Rutas" asp-action="Index">Ver Rutas Disponibles</a>
+<!-- Hero Section -->
+<div class="hero-modern">
+    <!-- Background con tu gradiente -->
+    <div class="hero-background">
+        <div class="hero-overlay"></div>
+        <div class="hero-particles"></div>
+    </div>
+
+    <div class="container hero-content">
+        <div class="row align-items-center min-vh-100">
+            <div class="col-lg-6 hero-text">
+                <div class="hero-badge">
+                    <i class="fas fa-award"></i>
+                    <span>Líder en transporte terrestre</span>
+                </div>
+                <h1 class="hero-title">
+                    Viaja con
+                    <span class="text-gradient">Comodidad</span>
+                    <br>y Seguridad
+                </h1>
+                <p class="hero-subtitle">
+                    Conectamos destinos, creamos experiencias. Reserva tu próximo viaje
+                    de manera fácil, segura y con la mejor atención al cliente.
+                </p>
+
+                <div class="hero-features">
+                    <div class="feature-item">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Viaje Seguro</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-clock"></i>
+                        <span>Puntualidad</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-star"></i>
+                        <span>5 Estrellas</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="search-card">
+                    <div class="search-header">
+                        <div class="search-icon">
+                            <i class="fas fa-route"></i>
+                        </div>
+                        <div>
+                            <h5 class="search-title">Buscar Viajes</h5>
+                            <p class="search-subtitle">Encuentra tu ruta perfecta</p>
+                        </div>
+                    </div>
+
+                    <form asp-action="BuscarViajes" method="post" class="search-form">
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control modern-input" id="origen" name="origen"
+                                   placeholder="Ciudad de origen" required>
+                            <label for="origen">
+                                <i class="fas fa-map-marker-alt me-2"></i>Origen
+                            </label>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control modern-input" id="destino" name="destino"
+                                   placeholder="Ciudad de destino" required>
+                            <label for="destino">
+                                <i class="fas fa-flag-checkered me-2"></i>Destino
+                            </label>
+                        </div>
+
+                        <div class="form-floating mb-4">
+                            <input type="date" class="form-control modern-input" id="fecha" name="fecha">
+                            <label for="fecha">
+                                <i class="fas fa-calendar me-2"></i>Fecha (Opcional)
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn btn-modern-primary">
+                            <i class="fas fa-search me-2"></i>
+                            Buscar Viajes
+                            <div class="btn-shine"></div>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Rutas Populares Section -->
+<section class="routes-section">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-badge">
+                <i class="fas fa-fire"></i>
+                <span>Más Solicitadas</span>
+            </div>
+            <h2 class="section-title">Nuestras Rutas <span class="text-gradient">Populares</span></h2>
+            <p class="section-subtitle">Descubre los destinos favoritos de nuestros pasajeros</p>
+        </div>
+
+        <div class="row">
+            @if (ViewBag.RutasDisponibles != null)
+            {
+                @foreach (var ruta in (List<AgenciaDeTransporteWeb.Models.Entities.Ruta>)ViewBag.RutasDisponibles)
+                {
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="route-card">
+                            <div class="route-header">
+                                <div class="route-cities">
+                                    <span class="city-from">@ruta.CiudadOrigen</span>
+                                    <div class="route-arrow">
+                                        <i class="fas fa-arrow-right"></i>
+                                    </div>
+                                    <span class="city-to">@ruta.CiudadDestino</span>
+                                </div>
+                                <div class="route-price">
+                                    <span class="price-label">Desde</span>
+                                    <span class="price-amount">S/. @ruta.Precio</span>
+                                </div>
+                            </div>
+
+                            <div class="route-details">
+                                <div class="detail-item">
+                                    <i class="fas fa-clock"></i>
+                                    <span>@ruta.DuracionHoras hrs</span>
+                                </div>
+                                <div class="detail-item">
+                                    <i class="fas fa-road"></i>
+                                    <span>@ruta.DistanciaKm km</span>
+                                </div>
+                                <div class="detail-item">
+                                    <i class="fas fa-wifi"></i>
+                                    <span>WiFi gratis</span>
+                                </div>
+                            </div>
+
+                            <a asp-controller="Rutas" asp-action="Detalles" asp-route-id="@ruta.Id"
+                               class="btn btn-route">
+                                Ver Horarios
+                                <i class="fas fa-arrow-right ms-2"></i>
+                            </a>
+
+                            <div class="route-glow"></div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</section>
+
+<!-- Próximas Salidas Section -->
+@if (ViewBag.ViajesProximos != null)
+{
+    <section class="departures-section">
+        <div class="container">
+            <div class="section-header">
+                <div class="section-badge">
+                    <i class="fas fa-clock"></i>
+                    <span>En Tiempo Real</span>
+                </div>
+                <h2 class="section-title">Próximas <span class="text-gradient">Salidas</span></h2>
+                <p class="section-subtitle">Reserva ahora y asegura tu asiento</p>
+            </div>
+
+            <div class="row">
+                @foreach (var viaje in (List<AgenciaDeTransporteWeb.Models.Entities.Viaje>)ViewBag.ViajesProximos)
+                {
+                    <div class="col-lg-6 mb-4">
+                        <div class="departure-card">
+                            <div class="departure-header">
+                                <div class="route-info">
+                                    <h6 class="route-name">@viaje.Ruta.CiudadOrigen → @viaje.Ruta.CiudadDestino</h6>
+                                    <div class="departure-time">
+                                        <i class="fas fa-calendar-day"></i>
+                                        <span>@viaje.FechaSalida.ToString("dd/MM/yyyy")</span>
+                                        <i class="fas fa-clock ms-3"></i>
+                                        <span>@viaje.FechaSalida.ToString("HH:mm")</span>
+                                    </div>
+                                </div>
+                                <div class="price-badge">
+                                    <span class="price-amount">S/. @viaje.PrecioViaje</span>
+                                </div>
+                            </div>
+
+                            <div class="departure-details">
+                                <div class="detail-row">
+                                    <div class="detail-item">
+                                        <i class="fas fa-bus"></i>
+                                        <span>@viaje.Autobus.Placa - @viaje.Autobus.Modelo</span>
+                                    </div>
+                                    <div class="availability">
+                                        <i class="fas fa-users"></i>
+                                        <span class="available-count">@viaje.AsientosDisponibles</span>
+                                        <span class="available-text">disponibles</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="departure-actions">
+                                @if (User.Identity.IsAuthenticated)
+                                {
+                                    <a asp-controller="Reservas" asp-action="SeleccionarAsiento" asp-route-viajeId="@viaje.Id"
+                                       class="btn btn-departure">
+                                        <i class="fas fa-ticket-alt me-2"></i>
+                                        Reservar Ahora
+                                    </a>
+                                }
+                                else
+                                {
+                                    <a asp-controller="Account" asp-action="Login"
+                                       class="btn btn-departure-auth">
+                                        <i class="fas fa-sign-in-alt me-2"></i>
+                                        Iniciar Sesión para Reservar
+                                    </a>
+                                }
+                            </div>
+
+                            <div class="departure-pulse"></div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+}
+
+<!-- Features Section -->
+<section class="features-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h5>Viaje Seguro</h5>
+                    <p>Conductores certificados y unidades con mantenimiento preventivo</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-wifi"></i>
+                    </div>
+                    <h5>WiFi Gratuito</h5>
+                    <p>Mantente conectado durante todo tu viaje sin costo adicional</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-headset"></i>
+                    </div>
+                    <h5>Atención 24/7</h5>
+                    <p>Soporte al cliente las 24 horas para resolver cualquier consulta</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h5>App Móvil</h5>
+                    <p>Gestiona tus reservas desde cualquier lugar con nuestra app</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

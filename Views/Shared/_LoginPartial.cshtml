@@ -1,22 +1,32 @@
 ﻿@using Microsoft.AspNetCore.Identity
-@using AgenciaDeTransporteWeb.Models.Entities
-@inject SignInManager<Usuario> SignInManager
-@inject UserManager<Usuario> UserManager
+@inject SignInManager<AgenciaDeTransporteWeb.Models.Entities.Usuario> SignInManager
+@inject UserManager<AgenciaDeTransporteWeb.Models.Entities.Usuario> UserManager
 
 <ul class="navbar-nav">
     @if (SignInManager.IsSignedIn(User))
     {
-        <li class="nav-item">
-            <a class="nav-link text-dark" asp-area="" asp-controller="Account" asp-action="Logout">Cerrar Sesión (@User.Identity?.Name)</a>
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                Hola, @User.Identity?.Name!
+            </a>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" asp-controller="Reservas" asp-action="MisReservas">Mis Reservas</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <form class="form-inline" asp-controller="Account" asp-action="Logout" method="post">
+                        <button type="submit" class="dropdown-item">Cerrar Sesión</button>
+                    </form>
+                </li>
+            </ul>
         </li>
     }
     else
     {
         <li class="nav-item">
-            <a class="nav-link text-dark" asp-area="" asp-controller="Account" asp-action="Register">Registrarse</a>
+            <a class="nav-link" asp-controller="Account" asp-action="Register">Registrarse</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link text-dark" asp-area="" asp-controller="Account" asp-action="Login">Iniciar Sesión</a>
+            <a class="nav-link" asp-controller="Account" asp-action="Login">Iniciar Sesión</a>
         </li>
     }
 </ul>

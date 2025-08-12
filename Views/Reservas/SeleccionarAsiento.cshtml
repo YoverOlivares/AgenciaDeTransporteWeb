@@ -1,5 +1,370 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model AgenciaDeTransporteWeb.Models.ViewModels.SeleccionAsientoViewModel
 @{
+    ViewData["Title"] = "Seleccionar Asiento";
 }
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-bus me-2"></i>
+                        Selecciona tu Asiento
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="bus-layout">
+                        <div class="bus-header mb-4">
+                            <div class="driver-area">
+                                <i class="fas fa-steering-wheel"></i>
+                                <span>Conductor</span>
+                            </div>
+                        </div>
+
+                        <form asp-action="CrearReserva" method="post" id="reservaForm">
+                            <input type="hidden" name="viajeId" value="@Model.Viaje.Id" />
+                            <input type="hidden" name="asientoId" id="asientoSeleccionado" />
+
+                            <div class="seats-grid">
+                                @{
+                                    var asientosPorFila = 4;
+                                    var filas = (Model.AsientosDisponibles.Count + asientosPorFila - 1) / asientosPorFila;
+                                }
+
+                                @for (int fila = 0; fila < filas; fila++)
+                                {
+                                    <div class="seat-row">
+                                        @for (int posicion = 0; posicion < asientosPorFila; posicion++)
+                                        {
+                                            var indice = fila * asientosPorFila + posicion;
+                                            if (indice < Model.AsientosDisponibles.Count)
+                                            {
+                                                var asiento = Model.AsientosDisponibles[indice];
+                                                <div class="seat-container">
+                                                    <button type="button"
+                                                            class="seat available @(asiento.TipoAsiento.ToLower())"
+                                                            data-asiento-id="@asiento.Id"
+                                                            data-numero="@asiento.NumeroAsiento"
+                                                            data-tipo="@asiento.TipoAsiento">
+                                                        @asiento.NumeroAsiento
+                                                    </button>
+                                                    <small class="seat-type">@asiento.TipoAsiento</small>
+                                                </div>
+                                            }
+                                            else if (posicion == 2)
+                                            {
+                                                <!-- Pasillo -->
+                                                <div class="aisle"></div>
+                                            }
+                                            else
+                                            {
+                                                <div class="seat-container">
+                                                    <div class="seat empty"></div>
+                                                </div>
+                                            }
+                                        }
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="legend mt-4">
+                                <div class="legend-item">
+                                    <div class="seat available estándar small"></div>
+                                    <span>Disponible</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="seat selected small"></div>
+                                    <span>Seleccionado</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="seat vip small"></div>
+                                    <span>VIP</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="seat cama small"></div>
+                                    <span>Cama</span>
+                                </div>
+                            </div>
+
+                            <div class="text-center mt-4">
+                                <button type="submit" class="btn btn-success btn-lg" id="btnConfirmar" disabled>
+                                    <i class="fas fa-check me-2"></i>
+                                    Confirmar Reserva
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Detalles del Viaje
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="trip-details">
+                        <div class="route-info mb-3">
+                            <h6 class="text-primary">
+                                @Model.Viaje.Ruta.CiudadOrigen
+                                <i class="fas fa-arrow-right mx-2"></i>
+                                @Model.Viaje.Ruta.CiudadDestino
+                            </h6>
+                        </div>
+
+                        <div class="detail-row">
+                            <strong>Fecha y Hora:</strong>
+                            <span>@Model.Viaje.FechaSalida.ToString("dd/MM/yyyy HH:mm")</span>
+                        </div>
+
+                        <div class="detail-row">
+                            <strong>Autobús:</strong>
+                            <span>@Model.Viaje.Autobus.Placa - @Model.Viaje.Autobus.Modelo</span>
+                        </div>
+
+                        <div class="detail-row">
+                            <strong>Precio Base:</strong>
+                            <span class="text-success fw-bold">S/. @Model.Viaje.PrecioViaje</span>
+                        </div>
+
+                        <div class="detail-row">
+                            <strong>Asientos Disponibles:</strong>
+                            <span class="badge bg-success">@Model.Viaje.AsientosDisponibles</span>
+                        </div>
+
+                        <hr>
+
+                        <div id="asientoSeleccionadoInfo" style="display: none;">
+                            <h6 class="text-primary">Asiento Seleccionado:</h6>
+                            <div class="selected-seat-info">
+                                <div class="detail-row">
+                                    <strong>Número:</strong>
+                                    <span id="numeroAsiento">-</span>
+                                </div>
+                                <div class="detail-row">
+                                    <strong>Tipo:</strong>
+                                    <span id="tipoAsiento">-</span>
+                                </div>
+                                <div class="detail-row">
+                                    <strong>Total a Pagar:</strong>
+                                    <span class="text-success fw-bold" id="totalPagar">S/. @Model.Viaje.PrecioViaje</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mt-3">
+                <div class="card-body text-center">
+                    <i class="fas fa-shield-alt text-success mb-2" style="font-size: 2rem;"></i>
+                    <h6>Reserva Segura</h6>
+                    <p class="text-muted small">
+                        Tu reserva está protegida con encriptación SSL
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .bus-layout {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .bus-header {
+        text-align: center;
+        border-bottom: 2px solid #dee2e6;
+        padding-bottom: 15px;
+    }
+
+    .driver-area {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 20px;
+        background-color: #f8f9fa;
+        border-radius: 20px;
+        border: 2px solid #dee2e6;
+    }
+
+    .seats-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .seat-row {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .seat-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .seat {
+        width: 50px;
+        height: 50px;
+        border: 2px solid #ccc;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: white;
+    }
+
+        .seat.small {
+            width: 20px;
+            height: 20px;
+            font-size: 10px;
+        }
+
+        .seat.available:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .seat.estándar {
+            border-color: #28a745;
+            color: #28a745;
+        }
+
+        .seat.vip {
+            border-color: #ffc107;
+            color: #ffc107;
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+        }
+
+        .seat.cama {
+            border-color: #6f42c1;
+            color: #6f42c1;
+            background: linear-gradient(135deg, #f8f0ff, #e1d3f7);
+        }
+
+        .seat.selected {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,123,255,0.3);
+        }
+
+        .seat.empty {
+            background: transparent;
+            border: none;
+            cursor: default;
+        }
+
+    .aisle {
+        width: 30px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6c757d;
+        font-size: 12px;
+    }
+
+        .aisle::before {
+            content: "Pasillo";
+            transform: rotate(90deg);
+            white-space: nowrap;
+        }
+
+    .seat-type {
+        font-size: 10px;
+        color: #6c757d;
+        text-align: center;
+    }
+
+    .legend {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+    }
+
+    .trip-details .detail-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid #f8f9fa;
+    }
+
+    .selected-seat-info {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 10px;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const seats = document.querySelectorAll('.seat.available');
+        const asientoInput = document.getElementById('asientoSeleccionado');
+        const btnConfirmar = document.getElementById('btnConfirmar');
+        const asientoInfo = document.getElementById('asientoSeleccionadoInfo');
+        const numeroAsiento = document.getElementById('numeroAsiento');
+        const tipoAsiento = document.getElementById('tipoAsiento');
+
+        seats.forEach(seat => {
+            seat.addEventListener('click', function() {
+                // Remover selección anterior
+                document.querySelectorAll('.seat.selected').forEach(s => {
+                    s.classList.remove('selected');
+                    s.classList.add('available');
+                });
+
+                // Seleccionar nuevo asiento
+                this.classList.remove('available');
+                this.classList.add('selected');
+
+                // Actualizar información
+                const asientoId = this.dataset.asientoId;
+                const numero = this.dataset.numero;
+                const tipo = this.dataset.tipo;
+
+                asientoInput.value = asientoId;
+                numeroAsiento.textContent = numero;
+                tipoAsiento.textContent = tipo;
+
+                // Mostrar información y habilitar botón
+                asientoInfo.style.display = 'block';
+                btnConfirmar.disabled = false;
+            });
+        });
+
+        // Validar formulario
+        document.getElementById('reservaForm').addEventListener('submit', function(e) {
+            if (!asientoInput.value) {
+                e.preventDefault();
+                alert('Por favor selecciona un asiento');
+            }
+        });
+    });
+</script>

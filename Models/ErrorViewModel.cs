@@ -1,4 +1,4 @@
-namespace AgenciaDeTransporteWeb.Models
+namespace AgenciaDeTransporteWeb.Models.ViewModels
 {
     public class ErrorViewModel
     {
