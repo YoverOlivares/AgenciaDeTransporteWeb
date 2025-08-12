@@ -1,11 +1,11 @@
-﻿// Controllers/ReservasController.cs
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using AgenciaDeTransporteWeb.Data;
 using AgenciaDeTransporteWeb.Models.Entities;
 using AgenciaDeTransporteWeb.Models.ViewModels;
+using AgenciaDeTransporteWeb.Services.Interfaces;
 
 namespace AgenciaDeTransporteWeb.Controllers
 {
@@ -15,15 +15,24 @@ namespace AgenciaDeTransporteWeb.Controllers
         private readonly ApplicationDbContext _context;
         private readonly UserManager<Usuario> _userManager;
         private readonly ILogger<ReservasController> _logger;
+        private readonly IReservaService _reservaService;
+        private readonly IPagoService _pagoService;
+        private readonly IPDFService _pdfService;
 
         public ReservasController(
             ApplicationDbContext context,
             UserManager<Usuario> userManager,
-            ILogger<ReservasController> logger)
+            ILogger<ReservasController> logger,
+            IReservaService reservaService,
+            IPagoService pagoService,
+            IPDFService pdfService)
         {
             _context = context;
             _userManager = userManager;
             _logger = logger;
+            _reservaService = reservaService;
+            _pagoService = pagoService;
+            _pdfService = pdfService;
         }
 
         public async Task<IActionResult> Index()
@@ -32,16 +41,7 @@ namespace AgenciaDeTransporteWeb.Controllers
             if (usuario == null)
                 return RedirectToAction("Login", "Account");
 
-            var reservas = await _context.Reservas
-                .Include(r => r.Viaje)
-                    .ThenInclude(v => v.Ruta)
-                .Include(r => r.Viaje)
-                    .ThenInclude(v => v.Autobus)
-                .Include(r => r.Asiento)
-                .Where(r => r.UsuarioId == usuario.Id)
-                .OrderByDescending(r => r.FechaReserva)
-                .ToListAsync();
-
+            var reservas = await _reservaService.ObtenerReservasUsuarioAsync(usuario.Id);
             return View(reservas);
         }
 
@@ -50,7 +50,6 @@ namespace AgenciaDeTransporteWeb.Controllers
             var viaje = await _context.Viajes
                 .Include(v => v.Ruta)
                 .Include(v => v.Autobus)
-                    .ThenInclude(a => a.Asientos)
                 .FirstOrDefaultAsync(v => v.Id == viajeId);
 
             if (viaje == null)
@@ -65,17 +64,7 @@ namespace AgenciaDeTransporteWeb.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
-            // Obtener asientos ya reservados
-            var asientosReservados = await _context.Reservas
-                .Where(r => r.ViajeId == viajeId && r.EstadoReserva != "Cancelada")
-                .Select(r => r.AsientoId)
-                .ToListAsync();
-
-            // Filtrar asientos disponibles
-            var asientosDisponibles = viaje.Autobus.Asientos
-                .Where(a => a.Activo && !asientosReservados.Contains(a.Id))
-                .OrderBy(a => a.NumeroAsiento)
-                .ToList();
+            var asientosDisponibles = await _reservaService.ObtenerAsientosDisponiblesAsync(viajeId);
 
             var viewModel = new SeleccionAsientoViewModel
             {
@@ -95,51 +84,18 @@ namespace AgenciaDeTransporteWeb.Controllers
                 if (usuario == null)
                     return RedirectToAction("Login", "Account");
 
-                // Validar que el asiento esté disponible
-                var asientoDisponible = await _context.Reservas
-                    .AnyAsync(r => r.AsientoId == asientoId &&
-                                  r.ViajeId == viajeId &&
-                                  r.EstadoReserva != "Cancelada");
+                var resultado = await _reservaService.CrearReservaAsync(usuario.Id, viajeId, asientoId);
 
-                if (asientoDisponible)
+                if (resultado.Success)
                 {
-                    TempData["Error"] = "El asiento seleccionado ya no está disponible";
+                    TempData["Success"] = $"Reserva creada exitosamente. Código: {resultado.Reserva.CodigoReserva}";
+                    return RedirectToAction("Detalles", new { codigo = resultado.Reserva.CodigoReserva });
+                }
+                else
+                {
+                    TempData["Error"] = resultado.Message;
                     return RedirectToAction("SeleccionarAsiento", new { viajeId });
                 }
-
-                var viaje = await _context.Viajes
-                    .Include(v => v.Ruta)
-                    .FirstOrDefaultAsync(v => v.Id == viajeId);
-
-                if (viaje == null)
-                {
-                    TempData["Error"] = "Viaje no encontrado";
-                    return RedirectToAction("Index", "Home");
-                }
-
-                // Generar código único de reserva
-                var codigoReserva = $"RES{DateTime.Now:yyyyMMdd}{Random.Shared.Next(1000, 9999)}";
-
-                var reserva = new Reserva
-                {
-                    UsuarioId = usuario.Id,
-                    ViajeId = viajeId,
-                    AsientoId = asientoId,
-                    CodigoReserva = codigoReserva,
-                    FechaReserva = DateTime.Now,
-                    EstadoReserva = "Pendiente",
-                    MontoTotal = viaje.PrecioViaje
-                };
-
-                _context.Reservas.Add(reserva);
-
-                // Actualizar asientos disponibles
-                viaje.AsientosDisponibles--;
-
-                await _context.SaveChangesAsync();
-
-                TempData["Success"] = $"Reserva creada exitosamente. Código: {codigoReserva}";
-                return RedirectToAction("Detalles", new { codigo = codigoReserva });
             }
             catch (Exception ex)
             {
@@ -154,14 +110,7 @@ namespace AgenciaDeTransporteWeb.Controllers
             if (string.IsNullOrWhiteSpace(codigo))
                 return NotFound();
 
-            var reserva = await _context.Reservas
-                .Include(r => r.Usuario)
-                .Include(r => r.Viaje)
-                    .ThenInclude(v => v.Ruta)
-                .Include(r => r.Viaje)
-                    .ThenInclude(v => v.Autobus)
-                .Include(r => r.Asiento)
-                .FirstOrDefaultAsync(r => r.CodigoReserva == codigo);
+            var reserva = await _reservaService.ObtenerReservaPorCodigoAsync(codigo);
 
             if (reserva == null)
                 return NotFound();
@@ -182,28 +131,16 @@ namespace AgenciaDeTransporteWeb.Controllers
                 if (usuario == null)
                     return RedirectToAction("Login", "Account");
 
-                var reserva = await _context.Reservas
-                    .Include(r => r.Viaje)
-                    .FirstOrDefaultAsync(r => r.Id == id && r.UsuarioId == usuario.Id);
+                var resultado = await _reservaService.CancelarReservaAsync(id, usuario.Id);
 
-                if (reserva == null)
+                if (resultado.Success)
                 {
-                    TempData["Error"] = "Reserva no encontrada";
-                    return RedirectToAction("Index");
+                    TempData["Success"] = resultado.Message;
                 }
-
-                if (reserva.EstadoReserva == "Cancelada" || reserva.EstadoReserva == "Completada")
+                else
                 {
-                    TempData["Error"] = "No se puede cancelar esta reserva";
-                    return RedirectToAction("Index");
+                    TempData["Error"] = resultado.Message;
                 }
-
-                reserva.EstadoReserva = "Cancelada";
-                reserva.Viaje.AsientosDisponibles++;
-
-                await _context.SaveChangesAsync();
-
-                TempData["Success"] = "Reserva cancelada exitosamente";
             }
             catch (Exception ex)
             {
@@ -220,15 +157,7 @@ namespace AgenciaDeTransporteWeb.Controllers
             if (string.IsNullOrWhiteSpace(codigo))
                 return View();
 
-            var reserva = await _context.Reservas
-                .Include(r => r.Usuario)
-                .Include(r => r.Viaje)
-                    .ThenInclude(v => v.Ruta)
-                .Include(r => r.Viaje)
-                    .ThenInclude(v => v.Autobus)
-                .Include(r => r.Asiento)
-                .FirstOrDefaultAsync(r => r.CodigoReserva == codigo);
-
+            var reserva = await _reservaService.ObtenerReservaPorCodigoAsync(codigo);
             return View(reserva);
         }
 
@@ -257,7 +186,9 @@ namespace AgenciaDeTransporteWeb.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ProcesarPago(int reservaId, string metodoPago)
+        public async Task<IActionResult> ProcesarPago(int reservaId, string metodoPago,
+            string numeroTarjeta = "", string cvv = "", string mesExpiracion = "", string anioExpiracion = "",
+            string nombreTarjeta = "", string cuentaOrigen = "", string banco = "")
         {
             try
             {
@@ -269,33 +200,67 @@ namespace AgenciaDeTransporteWeb.Controllers
                 if (usuario == null || reserva.UsuarioId != usuario.Id)
                     return Forbid();
 
-                // Crear transacción
-                var transaccion = new Transaccion
+                // Preparar datos de pago según método
+                var datosPago = new Dictionary<string, string>();
+
+                if (metodoPago.ToLower() == "tarjeta")
                 {
-                    ReservaId = reservaId,
-                    TipoTransaccion = "Pago",
-                    MetodoPago = metodoPago,
-                    Monto = reserva.MontoTotal,
-                    FechaTransaccion = DateTime.Now,
-                    EstadoTransaccion = "Completada",
-                    ReferenciaPago = $"PAY{DateTime.Now:yyyyMMddHHmmss}"
-                };
+                    datosPago["numeroTarjeta"] = numeroTarjeta;
+                    datosPago["cvv"] = cvv;
+                    datosPago["mesExpiracion"] = mesExpiracion;
+                    datosPago["anioExpiracion"] = anioExpiracion;
+                    datosPago["nombreTarjeta"] = nombreTarjeta;
+                }
+                else if (metodoPago.ToLower() == "transferencia")
+                {
+                    datosPago["cuentaOrigen"] = cuentaOrigen;
+                    datosPago["banco"] = banco;
+                }
 
-                _context.Transacciones.Add(transaccion);
+                var resultado = await _pagoService.ProcesarPagoAsync(reservaId, metodoPago, reserva.MontoTotal, datosPago);
 
-                // Actualizar estado de reserva
-                reserva.EstadoReserva = "Confirmada";
-
-                await _context.SaveChangesAsync();
-
-                TempData["Success"] = "Pago procesado exitosamente. Su reserva ha sido confirmada.";
-                return RedirectToAction("Detalles", new { codigo = reserva.CodigoReserva });
+                if (resultado.Success)
+                {
+                    TempData["Success"] = "Pago procesado exitosamente. Su reserva ha sido confirmada.";
+                    TempData["ReferenciaPago"] = resultado.ReferenciaPago;
+                    return RedirectToAction("Detalles", new { codigo = reserva.CodigoReserva });
+                }
+                else
+                {
+                    TempData["Error"] = resultado.Message;
+                    return RedirectToAction("Pagar", new { id = reservaId });
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error al procesar pago");
                 TempData["Error"] = "Error al procesar el pago. Intente nuevamente.";
                 return RedirectToAction("Pagar", new { id = reservaId });
+            }
+        }
+
+        public async Task<IActionResult> DescargarTicket(string codigo)
+        {
+            try
+            {
+                var reserva = await _reservaService.ObtenerReservaPorCodigoAsync(codigo);
+
+                if (reserva == null)
+                    return NotFound();
+
+                var usuario = await _userManager.GetUserAsync(User);
+                if (usuario == null || reserva.UsuarioId != usuario.Id)
+                    return Forbid();
+
+                var pdfBytes = await _pdfService.GenerarTicketReservaAsync(reserva);
+
+                return File(pdfBytes, "application/pdf", $"Ticket_{codigo}.pdf");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error al generar ticket para reserva {codigo}");
+                TempData["Error"] = "Error al generar el ticket";
+                return RedirectToAction("Detalles", new { codigo });
             }
         }
     }

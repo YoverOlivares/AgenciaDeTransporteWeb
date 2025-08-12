@@ -1,0 +1,306 @@
+﻿@model AgenciaDeTransporteWeb.Models.Entities.Reserva
+@{
+    ViewData["Title"] = "Consultar Reserva";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Formulario de consulta -->
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-search me-2"></i>
+                        Consultar Reserva
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="get" asp-action="ConsultarReserva">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <label class="form-label">Código de Reserva</label>
+                                <input type="text" name="codigo" class="form-control form-control-lg"
+                                       placeholder="Ingrese su código de reserva (ej: RES20250112XXXX)"
+                                       value="@Context.Request.Query["codigo"]" required>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    El código de reserva se encuentra en su ticket o confirmación por email
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">&nbsp;</label>
+                                <button type="submit" class="btn btn-info btn-lg w-100">
+                                    <i class="fas fa-search me-2"></i>
+                                    Consultar
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            @if (Model != null)
+            {
+                <!-- Resultado de la consulta -->
+                <div class="card shadow mt-4">
+                    <div class="card-header bg-success text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-check-circle me-2"></i>
+                                Reserva Encontrada
+                            </h5>
+                            <span class="badge @GetEstadoBadgeClass(Model.EstadoReserva) fs-6">
+                                @Model.EstadoReserva
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Código de reserva destacado -->
+                        <div class="text-center mb-4 p-3 bg-light rounded">
+                            <h3 class="text-primary mb-1">@Model.CodigoReserva</h3>
+                            <p class="text-muted mb-0">Código de Reserva</p>
+                        </div>
+
+                        <!-- Información del viaje -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="info-section">
+                                    <h6 class="section-title">
+                                        <i class="fas fa-route text-primary me-2"></i>
+                                        Información del Viaje
+                                    </h6>
+                                    <div class="info-content">
+                                        <div class="route-display">
+                                            <div class="city-info">
+                                                <span class="city-name">@Model.Viaje.Ruta.CiudadOrigen</span>
+                                            </div>
+                                            <div class="route-arrow">
+                                                <i class="fas fa-arrow-right"></i>
+                                            </div>
+                                            <div class="city-info">
+                                                <span class="city-name">@Model.Viaje.Ruta.CiudadDestino</span>
+                                            </div>
+                                        </div>
+                                        <div class="detail-row">
+                                            <span class="detail-label">Fecha de Salida:</span>
+                                            <span class="detail-value">@Model.Viaje.FechaSalida.ToString("dd/MM/yyyy")</span>
+                                        </div>
+                                        <div class="detail-row">
+                                            <span class="detail-label">Hora de Salida:</span>
+                                            <span class="detail-value">@Model.Viaje.FechaSalida.ToString("HH:mm")</span>
+                                        </div>
+                                        <div class="detail-row">
+                                            <span class="detail-label">Hora de Llegada:</span>
+                                            <span class="detail-value">@Model.Viaje.FechaLlegada.ToString("HH:mm")</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="info-section">
+                                    <h6 class="section-title">
+                                        <i class="fas fa-bus text-primary me-2"></i>
+                                        Información del Autobús
+                                    </h6>
+                                    <div class="info-content">
+                                        <div class="detail-row">
+                                            <span class="detail-label">Placa:</span>
+                                            <span class="detail-value">@Model.Viaje.Autobus.Placa</span>
+                                        </div>
+                                        <div class="detail-row">
+                                            <span class="detail-label">Modelo:</span>
+                                            <span class="detail-value">@Model.Viaje.Autobus.Marca @Model.Viaje.Autobus.Modelo</span>
+                                        </div>
+                                        <div class="detail-row">
+                                            <span class="detail-label">Asiento:</span>
+                                            <span class="detail-value">
+                                                Nº @Model.Asiento.NumeroAsiento
+                                                <span class="badge bg-info ms-2">@Model.Asiento.TipoAsiento</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Información del pasajero -->
+                        <div class="info-section mb-4">
+                            <h6 class="section-title">
+                                <i class="fas fa-user text-primary me-2"></i>
+                                Información del Pasajero
+                            </h6>
+                            <div class="info-content">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="detail-row">
+                                            <span class="detail-label">Nombre:</span>
+                                            <span class="detail-value">@Model.Usuario.NombreCompleto</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="detail-row">
+                                            <span class="detail-label">Email:</span>
+                                            <span class="detail-value">@Model.Usuario.Email</span>
+                                        </div>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(Model.Usuario.Documento))
+                                    {
+                                        <div class="col-md-6">
+                                            <div class="detail-row">
+                                                <span class="detail-label">Documento:</span>
+                                                <span class="detail-value">@Model.Usuario.Documento</span>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Información de pago -->
+                        <div class="info-section mb-4">
+                            <h6 class="section-title">
+                                <i class="fas fa-money-bill-wave text-primary me-2"></i>
+                                Información de Pago
+                            </h6>
+                            <div class="info-content">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="detail-row">
+                                            <span class="detail-label">Fecha de Reserva:</span>
+                                            <span class="detail-value">@Model.FechaReserva.ToString("dd/MM/yyyy HH:mm")</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="detail-row">
+                                            <span class="detail-label">Monto Total:</span>
+                                            <span class="detail-value text-success fw-bold fs-5">S/. @Model.MontoTotal</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Estado y mensajes -->
+                        @switch (Model.EstadoReserva)
+                        {
+                            case "Pendiente":
+                                <div class="alert alert-warning">
+                                    <h6><i class="fas fa-clock me-2"></i>Reserva Pendiente de Pago</h6>
+                                    <p class="mb-2">Su reserva está confirmada pero pendiente de pago.</p>
+                                    <p class="mb-0"><strong>Importante:</strong> Debe completar el pago antes de 24 horas o la reserva será cancelada automáticamente.</p>
+                                </div>
+                                break;
+                            case "Confirmada":
+                                <div class="alert alert-success">
+                                    <h6><i class="fas fa-check-circle me-2"></i>Reserva Confirmada</h6>
+                                    <p class="mb-2">Su reserva está confirmada y el pago ha sido procesado exitosamente.</p>
+                                    <p class="mb-0"><strong>Recuerde:</strong> Llegar 15 minutos antes de la hora de salida con su documento de identidad.</p>
+                                </div>
+                                break;
+                            case "Cancelada":
+                                <div class="alert alert-danger">
+                                    <h6><i class="fas fa-times-circle me-2"></i>Reserva Cancelada</h6>
+                                    <p class="mb-0">Esta reserva ha sido cancelada. Si necesita viajar, debe hacer una nueva reserva.</p>
+                                </div>
+                                break;
+                            case "Completada":
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-flag-checkered me-2"></i>Viaje Completado</h6>
+                                    <p class="mb-0">Este viaje ha sido completado. ¡Esperamos que haya tenido un excelente viaje!</p>
+                                </div>
+                                break;
+                        }
+
+                        <!-- Acciones para usuarios autenticados -->
+                        @if (User.Identity.IsAuthenticated && User.Identity.Name == Model.Usuario.Email)
+                        {
+                            <div class="text-center mt-4">
+                                <a asp-action="Detalles" asp-route-codigo="@Model.CodigoReserva"
+                                   class="btn btn-primary">
+                                    <i class="fas fa-eye me-2"></i>
+                                    Ver Detalles Completos
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            else if (!string.IsNullOrEmpty(Context.Request.Query["codigo"]))
+            {
+                <!-- No encontrado -->
+                <div class="card mt-4">
+                    <div class="card-body text-center py-5">
+                        <div class="no-results">
+                            <i class="fas fa-search text-muted mb-3" style="font-size: 4rem;"></i>
+                            <h4 class="text-muted">Reserva no encontrada</h4>
+                            <p class="text-muted">
+                                No se encontró ninguna reserva con el código <strong>@Context.Request.Query["codigo"]</strong>
+                                <br>
+                                Verifique que el código esté escrito correctamente.
+                            </p>
+                            <div class="mt-4">
+                                <button onclick="document.querySelector('input[name=codigo]').focus()"
+                                        class="btn btn-primary">
+                                    <i class="fas fa-search me-2"></i>
+                                    Intentar Nuevamente
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Información de ayuda -->
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h6 class="text-primary mb-3">
+                        <i class="fas fa-question-circle me-2"></i>
+                        ¿Necesita ayuda?
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled small">
+                                <li class="mb-2">
+                                    <i class="fas fa-phone text-info me-2"></i>
+                                    <strong>Teléfono:</strong> +51 999 888 777
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-envelope text-info me-2"></i>
+                                    <strong>Email:</strong> soporte@transportemax.com
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled small">
+                                <li class="mb-2">
+                                    <i class="fas fa-clock text-info me-2"></i>
+                                    <strong>Horario:</strong> 24/7 Atención al cliente
+                                </li>
+                                <li class="mb-2">
+                                    <i class="fas fa-map-marker-alt text-info me-2"></i>
+                                    <strong>Oficinas:</strong> Principales ciudades del país
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@functions {
+    private string GetEstadoBadgeClass(string estado)
+    {
+        return estado switch
+        {
+            "Pendiente" => "bg-warning text-dark",
+            "Confirmada" => "bg-success",
+            "Cancelada" => "bg-danger",
+            "Completada" => "bg-info",
+            _ => "bg-secondary"
+        };
+    }
+}

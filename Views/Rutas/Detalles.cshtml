@@ -1,5 +1,317 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model AgenciaDeTransporteWeb.Models.Entities.Ruta
 @{
+    ViewData["Title"] = $"Ruta {Model.CiudadOrigen} - {Model.CiudadDestino}";
+    var viajes = ViewBag.Viajes as List<AgenciaDeTransporteWeb.Models.Entities.Viaje>;
+    
+    // Obtener parámetros de consulta de forma segura
+    var fechaSeleccionada = ViewContext.HttpContext.Request.Query["fecha"].ToString();
+    var horaSeleccionada = ViewContext.HttpContext.Request.Query["hora"].ToString();
+}
+
+<div class="container mt-4">
+    <!-- Header de la ruta -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 bg-gradient-primary text-white">
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="route-header">
+                                <h2 class="mb-2">
+                                    <span class="city-origin">@Model.CiudadOrigen</span>
+                                    <i class="fas fa-arrow-right mx-3"></i>
+                                    <span class="city-destination">@Model.CiudadDestino</span>
+                                </h2>
+                                <div class="route-info">
+                                    <span class="info-item">
+                                        <i class="fas fa-road me-2"></i>
+                                        @Model.DistanciaKm km
+                                    </span>
+                                    <span class="info-item">
+                                        <i class="fas fa-clock me-2"></i>
+                                        @Model.DuracionHoras horas
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <div class="price-display">
+                                <span class="price-label">Desde</span>
+                                <span class="price-amount">S/. @Model.Precio</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="fas fa-filter me-2"></i>
+                        Filtrar Viajes
+                    </h5>
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Fecha de Viaje</label>
+                            <input type="date" name="fecha" class="form-control" 
+                                   value="@fechaSeleccionada" min="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Hora Preferida</label>
+                            <select name="hora" class="form-select">
+                                <option value="">Cualquier hora</option>
+                                <option value="mañana" selected="@(horaSeleccionada == "mañana")">
+                                    Mañana (06:00 - 12:00)
+                                </option>
+                                <option value="tarde" selected="@(horaSeleccionada == "tarde")">
+                                    Tarde (12:00 - 18:00)
+                                </option>
+                                <option value="noche" selected="@(horaSeleccionada == "noche")">
+                                    Noche (18:00 - 00:00)
+                                </option>
+                            </select>
+
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search me-2"></i>
+                                    Buscar
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de viajes -->
+    <div class="row">
+        <div class="col-12">
+            @if (viajes != null && viajes.Any())
+            {
+                <h5 class="mb-3">
+                    <i class="fas fa-bus me-2"></i>
+                    Viajes Disponibles (@viajes.Count)
+                </h5>
+                
+                @foreach (var viaje in viajes)
+                {
+                    <div class="card mb-3 journey-card">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <!-- Horarios -->
+                                <div class="col-md-3">
+                                    <div class="time-section">
+                                        <div class="departure-time">
+                                            <span class="time">@viaje.FechaSalida.ToString("HH:mm")</span>
+                                            <span class="label">Salida</span>
+                                        </div>
+                                        <div class="journey-duration">
+                                            <i class="fas fa-arrow-right"></i>
+                                            <span>@Model.DuracionHoras h</span>
+                                        </div>
+                                        <div class="arrival-time">
+                                            <span class="time">@viaje.FechaLlegada.ToString("HH:mm")</span>
+                                            <span class="label">Llegada</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Información del autobús -->
+                                <div class="col-md-3">
+                                    <div class="bus-info">
+                                        <h6 class="bus-model">@viaje.Autobus.Marca @viaje.Autobus.Modelo</h6>
+                                        <p class="bus-plate mb-1">
+                                            <i class="fas fa-id-card me-2"></i>
+                                            @viaje.Autobus.Placa
+                                        </p>
+                                        <div class="bus-features">
+                                            <span class="feature-badge">
+                                                <i class="fas fa-wifi"></i> WiFi
+                                            </span>
+                                            <span class="feature-badge">
+                                                <i class="fas fa-snowflake"></i> A/C
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Disponibilidad -->
+                                <div class="col-md-3">
+                                    <div class="availability-section">
+                                        <div class="availability-info">
+                                            <span class="available-seats">
+                                                <i class="fas fa-users me-2"></i>
+                                                @viaje.AsientosDisponibles disponibles
+                                            </span>
+                                            <div class="seat-types mt-2">
+                                                <span class="seat-type">Estándar</span>
+                                                <span class="seat-type">VIP</span>
+                                                <span class="seat-type">Cama</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Precio y acción -->
+                                <div class="col-md-3 text-end">
+                                    <div class="price-section">
+                                        <div class="price-display">
+                                            <span class="price">S/. @viaje.PrecioViaje</span>
+                                            <span class="price-note">por persona</span>
+                                        </div>
+                                        <div class="action-buttons mt-3">
+                                            @if (User.Identity.IsAuthenticated)
+                                            {
+                                                <a asp-controller="Reservas" asp-action="SeleccionarAsiento" 
+                                                   asp-route-viajeId="@viaje.Id" 
+                                                   class="btn btn-primary w-100">
+                                                    <i class="fas fa-ticket-alt me-2"></i>
+                                                    Seleccionar Asientos
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <a asp-controller="Account" asp-action="Login" 
+                                                   class="btn btn-outline-primary w-100">
+                                                    <i class="fas fa-sign-in-alt me-2"></i>
+                                                    Iniciar Sesión
+                                                </a>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Fecha del viaje -->
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <div class="journey-date">
+                                        <i class="fas fa-calendar me-2"></i>
+                                        <strong>@viaje.FechaSalida.ToString("dddd, dd 'de' MMMM 'de' yyyy")</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <div class="no-results">
+                            <i class="fas fa-calendar-times text-muted mb-3" style="font-size: 4rem;"></i>
+                            <h4 class="text-muted">No hay viajes disponibles</h4>
+                            <p class="text-muted">
+                                No encontramos viajes para esta ruta en las fechas seleccionadas.
+                                <br />
+                                Intenta con otras fechas o revisa nuestras otras rutas disponibles.
+                            </p>
+                            <div class="mt-4">
+                                <a asp-controller="Home" asp-action="Index" class="btn btn-primary me-3">
+                                    <i class="fas fa-search me-2"></i>
+                                    Buscar Otras Rutas
+                                </a>
+                                <a asp-controller="Rutas" asp-action="Index" class="btn btn-outline-secondary">
+                                    <i class="fas fa-list me-2"></i>
+                                    Ver Todas las Rutas
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Información adicional -->
+    <div class="row mt-5">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Información del Viaje
+                    </h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Asientos reclinables y cómodos
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            WiFi gratuito durante todo el viaje
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Aire acondicionado y calefacción
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Baño a bordo y kit de entretenimiento
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Conductor profesional certificado
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title text-primary">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Políticas Importantes
+                    </h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-clock text-warning me-2"></i>
+                            Llegar 15 minutos antes de la salida
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-id-card text-warning me-2"></i>
+                            Presentar documento de identidad válido
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-suitcase text-warning me-2"></i>
+                            Máximo 23kg de equipaje por pasajero
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-times text-danger me-2"></i>
+                            Cancelaciones hasta 2 horas antes
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-ban text-danger me-2"></i>
+                            Prohibido fumar y consumir alcohol
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Auto-seleccionar fecha de hoy si no hay fecha seleccionada
+        document.addEventListener('DOMContentLoaded', function() {
+            const fechaInput = document.querySelector('input[name="fecha"]');
+            if (fechaInput && !fechaInput.value) {
+                const today = new Date();
+                const formattedDate = today.toISOString().split('T')[0];
+                fechaInput.value = formattedDate;
+            }
+        });
+    </script>
 }
